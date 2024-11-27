@@ -2,7 +2,7 @@
 ARG TAG
 
 #===============================
-FROM debian:stretch-slim AS base
+FROM debian:stable-slim AS base
 #===============================
 
 LABEL maintainer="Marius Millea <mariusmillea@gmail.com>"
@@ -20,20 +20,25 @@ RUN apt-get update \
         libssl-dev \
         m4 \
         make \
-        mysql-client \
-        php7.0-cli \
-        php7.0-mysql \
-        php7.0-xml \
+        default-mysql-client \
+        php8.2-cli \
+        php8.2-mysql \
+        php8.2-xml \
         pkg-config \
-        python \
         python3 \
-        python-mysqldb \
-        python3-mysqldb \
+	python3-dev \
+	python3-pip \
+	python-is-python3 \
     && rm -rf /var/lib/apt/lists
+RUN apt-get install -y --no-install-recommends git make m4 pkg-config dh-autoreconf libmariadb-dev libssl-dev
 
+RUN python3 -m pip install mysqlclient --break-system-packages
 # get source and compile server 
 COPY --chown=1000 boinc /usr/local/boinc
-RUN cd /usr/local/boinc && ./_autosetup && ./configure --disable-client --disable-manager && make
+RUN cd /usr/local/boinc && ./_autosetup 
+RUN cd /usr/local/boinc && ./configure --disable-client --disable-manager
+#RUN cd /usr/local/boinc && make CXXFLAGS="-Wno-deprecated-declarations -fpermissive"
+RUN cd /usr/local/boinc && make
 
 # project-making scripts
 COPY makeproject-step1.sh makeproject-step2.sh /usr/local/bin/
@@ -45,22 +50,22 @@ COPY --chown=1000 html /.project_root/html/
 COPY --chown=1000 secrets.env /run/secrets/
 
 #==============================
-FROM debian:stretch-slim AS b2d
+FROM debian:bookworm-slim AS b2d
 #==============================
 
 # do boinc2docker as a separate stage so we don't have to keep re-downloading
 # things whenever the build cache is invalidated
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        ca-certificates \
-        python-yaml \
-        wget
+#RUN apt-get update \
+#    && apt-get install -y --no-install-recommends \
+#        ca-certificates \
+#        python3-yaml \
+#        wget
 
 # the version of vboxwrapper/iso/appver installed is specified in
 # boinc2docker/boinc2docker.yml
-COPY boinc2docker /root/boinc2docker
-RUN /root/boinc2docker/boinc2docker_create_app --download_only
+#COPY boinc2docker /root/boinc2docker
+#RUN /root/boinc2docker/boinc2docker_create_app --download_only
 
 
 
@@ -70,14 +75,14 @@ FROM base AS base-b2d
 
 # copy/install extra things needed for the `-b2d` version
 
-RUN apt-get update \
-    && apt-get install -y --no-install-recommends \
-        python-yaml \
-        wget \
-    && rm -rf /var/lib/apt/lists
-
-COPY --from=b2d --chown=1000 /root/boinc2docker $HOME/boinc2docker 
-ENV PATH=$HOME/boinc2docker:$PATH
+#RUN apt-get update \
+#    && apt-get install -y --no-install-recommends \
+#        python3-yaml \
+#        wget \
+#    && rm -rf /var/lib/apt/lists
+#
+#COPY --from=b2d --chown=1000 /root/boinc2docker $HOME/boinc2docker 
+#ENV PATH=$HOME/boinc2docker:$PATH
 
 
 
@@ -108,8 +113,9 @@ ONBUILD USER $BOINC_USER
 
 
 # build server
+ARG CACHEBUST=0
 ONBUILD RUN makeproject-step1.sh
-ONBUILD RUN test -z "$TAG" || boinc2docker_create_app --projhome $PROJECT_ROOT
+#ONBUILD RUN test -z "$TAG" 
 ONBUILD CMD makeproject-step2.sh
 
 ONBUILD WORKDIR $PROJECT_ROOT
