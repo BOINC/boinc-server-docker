@@ -61,5 +61,4 @@ fi
 
 bin/xadd
 yes | bin/update_versions
-
 touch $PROJECT_ROOT/.built_${PROJECT}

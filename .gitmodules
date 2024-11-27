@@ -1,6 +1,3 @@
-[submodule "images/makeproject/boinc2docker"]
-	path = images/makeproject/boinc2docker
-	url = https://github.com/marius311/boinc2docker.git
 [submodule "images/makeproject/boinc"]
 	path = images/makeproject/boinc
 	url = https://github.com/boinc/boinc.git

@@ -21,6 +21,7 @@ cp -rT /.project_root $PROJECT_ROOT
 rm -rf /.project_root/*
 
 chmod g+w $PROJECT_ROOT/download
+chmod g+rx $HOME
 rm -r $PROJECT_ROOT/log_*
 mkdir $PROJECT_ROOT/html/stats_archive
 
