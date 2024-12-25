@@ -98,7 +98,7 @@ You now have a running BOINC server!
 
 > *Notes:* 
 > * The first time you run this, it may take a few minutes after invoking the `docker compose up -d` command before the server webpage appears. 
-> * If using Docker Toolbox, replace the final command above with `URL_BASE=$(docker-machine ip) docker compose up -d`. The server will be accessible at the IP returned by `docker-machine ip` rather than at `127.0.0.1`.
+> * If using Docker Toolbox, replace the final command above with `export URL_BASE=$(docker-machine ip) docker compose up -d`. The server will be accessible at the IP returned by `docker-machine ip` rather than at `127.0.0.1`.
 
 The server is made up of three Docker images,
 
