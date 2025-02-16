@@ -1,5 +1,5 @@
 # BOINC project cookbook (with `boinc-server-docker`)
-
+TODO: Add a note somewhere in here about Git using submodules and how BOINC updates need to be pulled and docker build won't do that automatically.
 ---
 <!-- TOC depthFrom:1 depthTo:6 withLinks:1 updateOnSave:1 orderedList:0 -->
 
@@ -29,17 +29,17 @@ This guide will show you how to create your own [BOINC](http://boinc.berkeley.ed
 
 `boinc-server-docker` packages up all of the dependencies of a BOINC project into a [Docker](http://www.docker.com) application, making it extremely easy and fast to set up. You don't need to know anything about Docker to use `boinc-server-docker`, its fairly easy to pick up the few pieces you need to know along the way. This guide will assume you don't know anything about Docker. 
 
-Once you have your server running, there a few ways to develop and run your code on it. This guide describes only the easiest way to do so, which is to use the `boinc2docker` tool that comes pre-installed on `boinc-server-docker`. This will involve packaging your application code inside a Docker container, a fairly simple task which we will describe. It assumes your code runs on Linux, and will automatically allow your code to run on Linux, Mac, and Windows 64bit volunteer computers. 
+Once you have your server running, there a few ways to develop and run your code on it. This guide describes only the easiest way to do so, which is to use the docker containers. This will involve packaging your application code inside a Docker container, a fairly simple task which we will describe. In fact, you may be able to use an existing docker image and just pass arguments needed for your workunits. This guide assumes your code runs on Linux, and it will automatically allow your code to run on Linux, Mac, and Windows 64bit volunteer computers. Docker also supports GPU access as well for acceleration.
 
-`boinc-server-docker` was initially developed for [Cosmology@Home](http://www.cosmologyathome.org). To see an example of a working project which is built on `boinc-server-docker`, see the Cosmology@Home [source code](http://www.github.com/marius311/cosmohome). 
+`boinc-server-docker` was initially developed for [Cosmology@Home](http://www.cosmologyathome.org) by [Marius Millea](http://www.github.com/marius311/), thank you to him for his contributions to the field. To see an example of a working project which is built on `boinc-server-docker`, see the Cosmology@Home [source code](http://www.github.com/marius311/cosmohome). 
 
 **Note on alternatives**
 
-There are other ways to run a server rather than using `boinc-server-docker`, for example [installing](https://boinc.berkeley.edu/trac/wiki/ServerIntro) the server software yourself, or using the prepackaged [VM image](https://boinc.berkeley.edu/trac/wiki/VmServer). Although these will work, they require more expertise and configuration; `boinc-server-docker` works out of the box and otherwise has no limitations. 
+There are other ways to run a server rather than using `boinc-server-docker`, for example [installing](https://boinc.berkeley.edu/trac/wiki/ServerIntro) the server software yourself. Although these will work, they require more expertise and configuration; `boinc-server-docker` works out of the box and otherwise has no limitations. 
 
 
-There are other ways to develop your applications too besides `boinc2docker`, for example compiling your code natively for each of the different platforms you wish to support (see e.g. the section [Developing BOINC applications](https://boinc.berkeley.edu/trac/wiki/ProjectMain)).
-You might want to do this if your application only compiles on Windows or Mac, or if you need GPU computing (which is currently not supported by `boinc2docker` apps). However, if neither of those are the case, `boinc2docker` applications are likely the easiest and fastest way to run your code (note the speed penalty due to the fact `boinc2docker` runs your code in a virtual machine is only 5-10%). 
+There are other ways to develop your applications too besides using docker containers, for example compiling your code natively for each of the different platforms you wish to support (see e.g. the section [Developing BOINC applications](https://boinc.berkeley.edu/trac/wiki/ProjectMain)).
+You might want to do this if your application only compiles on Windows or Mac. However, if neither of those are the case, docker applications are likely the easiest and fastest way to run your code across multiple platforms with a very minor (<5%) speed penalty. 
 
 
 ## Requirements
@@ -47,7 +47,7 @@ You might want to do this if your application only compiles on Windows or Mac, o
 If you are hosting your server on a Linux machine, the requirements are,
 
 * [Docker](https://docs.docker.com/engine/installation/) (>=17.03.0ce)
-* [docker-compose](https://docs.docker.com/compose/install/) (>=1.13.0 but !=1.19.0 due to a [bug](https://github.com/docker/docker-py/issues/1841))
+* [docker compose](https://docs.docker.com/compose/install/) (>=1.13.0 but !=1.19.0 due to a [bug](https://github.com/docker/docker-py/issues/1841))
 * git
 
 (Note that Docker requires a 64-bit machine and Linux kernel newer than version 3.10)
@@ -56,10 +56,6 @@ If your are hosting your server on Windows/Mac, you should use either,
 
 * [Docker for Mac](https://docs.docker.com/docker-for-mac/install/#download-docker-for-) (>=17.06.0ce)
 * [Docker for Windows](https://docs.docker.com/docker-for-windows/install/) (>=17.06.0ce)
-
-If you Windows/Mac system is too old to run either of those, you can use instead, 
-
-* [Docker Toolbox](https://docs.docker.com/toolbox/overview) (>=17.05.0ce)
 
 There are no other dependencies, as everything else is packaged inside of Docker. 
 
@@ -70,7 +66,7 @@ The server itself runs Linux. On Windows/Mac, Docker does the job of transparent
 
 Docker is kind of like a virtual machine in that it packages up a program, its dependencies, and in fact an entire operating system, into a self contained and isolated unit. It's not actually a virtual machine though. For example, it doesn't run any slower than if you were running the programs natively. 
 
-Some terminology: A Docker **image** (like a virtual machine image) contains the operating system and its entire filesystem. Images have names that look like "debian" or "ubuntu:16.04". The part after the ":" specifies the version (the default is "latest", so "debian" and "debian:latest" are the same thing). A running image is called a **container**; you can run multiple containers from a given image (i.e. multiple instances). Unlike most virtual machines, when you stop a container, any changes to files are lost. To persist files between runs, Docker uses **volumes**. A Docker volume is just a folder. It can be mounted at any location inside a container, and it can be mounted in multiple containers at once. Files changed inside volumes are saved. 
+Some terminology: A Docker **image** (like a virtual machine image) contains the operating system and its entire filesystem. Images have names that look like "debian" or "ubuntu:16.04". The part after the ":" specifies the version (the default is "latest", so "debian" and "debian:latest" are the same thing). A single instance of a running image is called a **container**; you can run multiple containers from a given image (i.e. multiple instances). Unlike most virtual machines, when you stop a container, any changes to files are lost. To persist files between runs, Docker uses **volumes**. A Docker volume is just a folder. It can be mounted at any location inside a container, and it can be mounted in multiple containers at once. Files changed inside volumes are saved. 
 
 Finally, Docker provides a free public repository for hosting images called the Docker Hub. You **pull** and **push** images to and from Docker Hub. This is how we distribute the `boinc-server-docker` images. Most images on the Docker Hub start with a repository name, e.g. our repository is called "boinc" so the full image names look like "boinc/server_apache:latest". 
 
@@ -89,26 +85,32 @@ cd boinc-server-docker
 and then run,
 
 ```bash
-docker-compose pull
-docker-compose up -d
+docker compose pull
+docker compose up -d
+```
+
+Note that if you get permissions errors here, it's because your user account does not have permission to access the docker daemon. Run the following commands, restart your machine, and you will have them. Or you can just add "sudo" to the start of all the subsequent commands.
+```sudo groupadd docker
+sudo usermod -aG docker $USER
 ```
 
 You now have a running BOINC server! 
 
 > *Notes:* 
-> * The first time you run this, it may take a few minutes after invoking the `docker-compose up -d` command before the server webpage appears. 
-> * Make sure your user is added to the `docker` group, otherwise the `docker-compose` and `docker` commands in this guide need to be run with `sudo`. 
-> * If using Docker Toolbox, replace the final command above with `URL_BASE=$(docker-machine ip) docker-compose up -d`. The server will be accessible at the IP returned by `docker-machine ip` rather than at `127.0.0.1`.
+> * The first time you run this, it may take a few minutes after invoking the `docker compose up -d` command before the server webpage appears. 
+> * If using Docker Toolbox, replace the final command above with `export URL_BASE=$(docker-machine ip) docker compose up -d`. The server will be accessible at the IP returned by `docker-machine ip` rather than at `127.0.0.1`.
 
 The server is made up of three Docker images,
 
 * **boinc/server_mysql** - This runs the MySQL server that holds your project's database. The database files are stored inside a volume called "boincserverdocker_mysql"
 * **boinc/server_apache** - This runs the Apache server that serves your project's webpage. It also runs all of the various backend daemons and programs which communicate with hosts that connect to your server.
-* **boinc/server_makeproject** - Unlike the other two images, this one doesn't remain running while your server is running. Instead, its run at the beginning to create your project's home folder. Your project's home folder contains things like your web pages, your applications, your job input files, etc... This folder is stored in a volume "boincserverdocker_project" and is mounted into the apache image after its created by this image.
+* **boinc/server_makeproject** - Unlike the other two images, this one doesn't remain running while your server is running. Instead, its run at the beginning to create your project's home folder. Your project's home folder contains things like your web pages, your applications, your job input files, etc... This folder is stored in a volume "boincserverdocker_project" and is mounted into the apache image after its created by this image (at /home/boincadm/project)
 
-The `docker-compose` program orchestrates Docker applications which involve multiple Docker images (like ours). The configuration and relation between the multiple images can be seen in the file `docker-compose.yml`. 
+The `docker compose` program orchestrates Docker applications which involve multiple Docker images (like ours). The configuration and relation between the multiple images can be seen in the file `docker compose.yml`. 
 
-If you wish to get a shell inside your server (sort of like ssh'ing into it), run `docker-compose exec apache bash`. From here you can run any one-time commands on your server, for example checking the server status (`bin/status`) or submitting some jobs with (`bin/create_work ...`; more on this later). However, remember that only the project folder is a volume, so any changes you make outside of this will disappear the next time you restart the server. In particular, any software installed with `apt-get` will disappear; the correct way to install anything into your server is discussed [later](tbd). 
+If you wish to get a shell inside your server (sort of like ssh'ing into it), run `docker exec -it boinc-server-docker-apache-1 bash`. You can run `docker container ls` to see all running containers and their names. From here you can run any one-time commands on your server, for example checking the server status (`bin/status`) or submitting some jobs with (`bin/create_work ...`; more on this later). However, remember that only the project folder is a volume, so any changes you make outside of this will disappear the next time you restart the server. In particular, any software installed with `apt-get` will disappear; the correct way to install anything into your server is discussed [later](tbd). 
+
+To shut down your server, run `docker compose down -v`
 
 
 ### Server URL
@@ -118,21 +120,22 @@ BOINC servers have their URL hardcoded, and will not function correctly unless t
 If this is not the case, for example if you are running Docker via Docker Machine instead of natively, or if you are running the server remotely, you will have to change the server URL. You can do so with the following command,
 
 ```bash
-URL_BASE=http://1.2.3.4 docker-compose up -d
+URL_BASE=http://1.2.3.4 docker compose up -d
 ```
 
 where you can replace `http://1.2.3.4` with whatever IP address or hostname you want to set for your server. 
 
-Note that each time you run the `docker-compose up` command you should specify the `URL_BASE` otherwise it will reset to the default. If you are running via Docker Machine, you can use `URL_BASE=http://$(docker-machine ip)` to automatically set the correct URL. 
+Note that each time you run the `docker compose up` command you should specify the `URL_BASE` otherwise it will reset to the default. If you are running via Docker Machine, you can use `URL_BASE=http://$(docker-machine ip)` to automatically set the correct URL. 
 
 At this point, your BOINC server is now 100% fully functioning, its webpage can be accessed at `http://127.0.0.1/boincserver` or whatever you have set the server URL, and it is ready to accept connections from clients and submission of jobs. 
 
+If this isn't the case for some, you can diagnose what's going on by peeking at the logs for each container. Please report any issues you find so we can fix them for other users. Use `docker logs --details CONTAINERNAMEORID` to see your logs.
 
 ### Running jobs
 
-Traditionally, creating a BOINC application meant either compiling your code into static binaries for each platform you wanted to support (e.g. 32 and 64-bit Linux, Windows, or Mac), or creating a Virtualbox image housing your app. Instructions for creating these types of applications can be found [here](https://boinc.berkeley.edu/trac/wiki/BasicApi) or [here](https://boinc.berkeley.edu/trac/wiki/VboxApps), and work just the same with `boinc-server-docker`. 
+Traditionally, creating a BOINC application meant either compiling your code into static binaries for each platform you wanted to support (e.g. 32 and 64-bit Linux, Windows, or Mac), or creating a Virtualbox image housing your app. Instructions for creating these types of applications can be found [here](https://boinc.berkeley.edu/trac/wiki/BasicApi) or [here](https://github.com/BOINC/boinc/wiki/Deploy-Linux-apps-using-VirtualBox-(cookbook)). 
 
-In this guide, however, we describe an easier way to run jobs which uses `boinc2docker`. This tool (which comes preinstalled with `boinc-server-docker`) lets you package your science applications inside Docker containers which are then delivered to your hosts. This makes your code automatically work on Linux, Windows, and Mac, and allows it to have arbitrary dependencies (e.g. Python, etc...) The trade-off is that it only works on 64-bit machines (most of BOINC anyway), requires users to have Virtualbox installed, and does not (currently) support GPUs. 
+In this guide, however, we describe an easier way to run jobs which uses docker. This makes your code automatically work on Linux, Windows, and Mac, and allows it to have arbitrary dependencies (e.g. Python, etc...)
 
 To begin, we give a brief introduction to running Docker containers in general. The syntax to run a Docker container is `docker run <image> <command>` where `<image>` is the name of the image and `<command>` is a normal Linux shell command to run inside the container. For example, the Docker Hub provides the image `python:alpine` which has Python installed (the "alpine" refers to the fact that the base OS for the Docker image is Alpine Linux, which is super small and makes the entire container be only ~25Mb). Thus you could execute a Python command in this container like, 
 
@@ -141,21 +144,16 @@ docker run python:alpine python -c "print('Hello BOINC')"
 ```
 and it would print the string "Hello BOINC". 
 
-Suppose you wanted to run this as a BOINC job. To do so, first get a shell inside your server with `docker-compose exec apache bash` and from the project directory run, 
+Suppose you wanted to run this as a BOINC job. To do so, first get a shell inside your server with `docker compose exec apache bash` and from the project directory run, 
 
-```bash
-root@boincserver:~/project$ bin/boinc2docker_create_work.py \
-    python:alpine python -c "print('Hello BOINC')"
+```TODO provide example here
 ```
-
-As you see, the script `bin/boinc2docker_create_work.py` takes the same arguments as `docker run` but instead of running the container, it creates a job on your server which runs the container on the volunteer's computer. 
 
 If you now connect a client to your server, it will download and run this job, and you will see "Hello BOINC" in the log file which is returned to the server after the job is finished. 
 
-Note that to run these types of Docker-based jobs, the client computer will need 64bit [Virtualbox](https://www.virtualbox.org/wiki/Downloads) installed and "virtualization" enabled in the BIOS. 
-
 If your jobs have output files, `boinc2docker` provides a special folder for this, `/root/shared/results`; any files written to this directory are automatically tar'ed up and returned as a BOINC result file. For example, if you ran the job, 
 
+TODO update this example
 ```bash
 root@boincserver:~/project# bin/boinc2docker_create_work.py \
     python:alpine python -c "open('/root/shared/results/hello.txt','w').write('Hello BOINC')"
@@ -163,17 +161,6 @@ root@boincserver:~/project# bin/boinc2docker_create_work.py \
 which creates a file "hello.txt" with contents "Hello BOINC", your server will receive a result file from the client which is a tar containing this file. BOINC results are stored by `boinc-server-docker` in a volume mounted by default at `/results` in the Apache container. 
 
 Of course, the `python:alpine` image here was just an example, any Docker image will work, including ones you create yourself. 
-
-#### Running without `boinc2docker`
-
-Finally, we note that, although by default the test server comes with `boinc2docker` pre-installed, it can also be removed. To do so, set the `TAG` variable to be empty,
-
-```bash
-TAG="" docker-compose up -d
-```
-
-If you do not specify it, the default tag is `TAG="-b2d"`, which launches the server with `boinc2docker` pre-installed. 
-
 
 ## Creating your own project
 
@@ -186,7 +173,7 @@ The first step is to copy one of these two folders to a new folder, which for th
 
 ```
 myproject/
-    docker-compose.yml
+    docker compose.yml
     .env
     images/
         apache/
@@ -197,15 +184,15 @@ myproject/
             Dockerfile
 ```
 
-The three `Dockerfile`'s will contain any modifications your project needs on top of the default `boinc-server-docker` images. The `docker-compose.yml` file specifies how these containers work together, and will likely not need any modifications from you. The `.env` file contains some customizable configuration options which you can change. 
+The three `Dockerfile`'s will contain any modifications your project needs on top of the default `boinc-server-docker` images. The `docker compose.yml` file specifies how these containers work together, and will likely not need any modifications from you. The `.env` file contains some customizable configuration options which you can change. 
 
 ### Building and running your server
 
-The test server did not require us to build any Docker containers because these were pre-built, stored on the Docker Hub, and were downloaded to your machine when you executed the `docker-compose pull` command. The images which comprise your server, on the other hand, need to be built; the command to do so is simply `docker-compose build`. 
+The test server did not require us to build any Docker containers because these were pre-built, stored on the Docker Hub, and were downloaded to your machine when you executed the `docker compose pull` command. The images which comprise your server, on the other hand, need to be built; the command to do so is simply `docker compose build`. 
 
-Afterwards, you can run a `docker-compose up -d` just as before to start the server. Of course, at this point you have made no modifications at all so the server is identical to the test server. We will discuss how to customize your server shortly. Note that you can combine the build and run commands into one with `docker-compose up -d --build`.
+Afterwards, you can run a `docker compose up -d` just as before to start the server. Of course, at this point you have made no modifications at all so the server is identical to the test server. We will discuss how to customize your server shortly. Note that you can combine the build and run commands into one with `docker compose up -d --build`.
 
-To stop your server, run `docker-compose down`. If you wish to reset your server entirely (i.e. to also delete the volumes housing your database and project folder), run `docker-compose down -v`. 
+To stop your server, run `docker compose down`. If you wish to reset your server entirely (i.e. to also delete the volumes housing your database and project folder), run `docker compose down`. To stop your server and delete any existing volumes (useful during development) run `docker compose down -v`
 
 
 ### Pinning the `boinc-server-docker` version
@@ -218,6 +205,7 @@ FROM boinc/server_apache:latest-b2d
 
 We have not discussed Dockerfile commands yet, but they are fairly simple, and you only need to know about three of them to use `boinc-server-docker`. One of them is the `FROM` command which always comes at the beginning of a Dockerfile and specifies that this image is built starting from another image. In our case it is saying that the Apache image for your server is based on the `boinc-server-docker` image called `boinc/server_apache:latest-b2d`. 
 
+TODO update links in this paragraph
 An important step you should take is to replace `latest` with a specific version, for example `2.0.0`, and you should do so for all three Dockerfiles. You can find the latest version of `boinc-server-docker` by looking at the [GitHub releases](https://github.com/marius311/boinc-server-docker/releases). With the versions pinned in this way, you can control exactly when you upgrade the version of `boinc-server-docker` that your server uses, and you can reproducibly go back to any previous version of your server. 
 
 
@@ -233,7 +221,7 @@ The correct way to install software like `emacs` or anything else is to do so in
 RUN apt-get update && apt-get install -y emacs
 ```
 
-`RUN` is another Dockerfile command and simply runs a regular Linux shell command inside our container. We need an `apt-get update` to pull the latest package information and the `-y` flag automatically answers "yes" when `apt-get` asks whether you really want to install the package. If we now run `docker-compose up -d --build`, it will produce a new Apache image for our project and start it up, swapping out the old version (that lacked `emacs`). If you now get a shell inside the container with `docker-compose exec apache bash` you will see that `emacs` is correctly installed, and will still exist if you restart the container. 
+`RUN` is another Dockerfile command and simply runs a regular Linux shell command inside our container. We need an `apt-get update` to pull the latest package information and the `-y` flag automatically answers "yes" when `apt-get` asks whether you really want to install the package. If we now run `docker compose up -d --build`, it will produce a new Apache image for our project and start it up, swapping out the old version (that lacked `emacs`). If you now get a shell inside the container with `docker compose exec apache bash` you will see that `emacs` is correctly installed, and will still exist if you restart the container. 
 
 In exactly this way you can install any software into any of the containers, or run any commands that might be necessary to set them up. These commands are for the general set up of the server; for things like submitting jobs, performing server maintenance tasks like database optimization, etc... you can just get a shell into the server and run the commands directly from there.
 
@@ -244,13 +232,13 @@ Next you will probably want to give your project a name, give it a URL, and more
 If you want to change `config.xml`, first copy it out of the Docker container by running the following from your project folder, 
 
 ```bash
-docker-compose run makeproject cat config.xml > images/makeproject/config.xml
+docker compose run makeproject cat config.xml > images/makeproject/config.xml
 ```
 
 Your folder structure should now look like this,
 ```
 myproject/
-    docker-compose.yml
+    docker compose.yml
     .env
     images/
         apache/
@@ -268,7 +256,7 @@ Now edit `images/makeproject/Dockerfile` and add the following line at the botto
 COPY --chown=1000 config.xml $PROJECT_ROOT
 ```
 
-The `COPY` command makes it so that the next time you `docker-compose build` your project images, the `config.xml` file in `myproject/images/makeproject` is copied into the image, overwriting the default one which is there (the `--chown=1000` part is needed to make the permission correct inside the container). Any changes you make to this file are now reflected in the image, and will take effect after you run `build` and `up`. You can now set `<long_name>` as desired, or change any other option. 
+The `COPY` command makes it so that the next time you `docker compose build` your project images, the `config.xml` file in `myproject/images/makeproject` is copied into the image, overwriting the default one which is there (the `--chown=1000` part is needed to make the permission correct inside the container). Any changes you make to this file are now reflected in the image, and will take effect after you run `build` and `up`. You can now set `<long_name>` as desired, or change any other option. 
 
 Similarly, you can `COPY` any files into any of the other containers comprising your project. For a full list of available Dockerfile commands beyond the `FROM`, `RUN`, and `COPY` that we've discussed here, see the [Dockerfile Reference](https://docs.docker.com/engine/reference/builder/).
 
@@ -281,13 +269,15 @@ The server also has a number of custom configuration variables. These fall into 
 	* `URL_BASE=http://127.0.0.1` - The "base" or "master" URL. 
 	* Theses can be specified on the command line:
 		```bash
-		URL_BASE=http://1.2.3.4 docker-compose up -d
+		URL_BASE=http://1.2.3.4 docker compose up -d
 		```
 * Options which can only be changed once before the first time you create your project, and cannot be changed afterwards:
 	* `PROJECT=boincserver` - The name of the project. 
 	* `BOINC_USER=boincadm` - The user running the project
 	* `PROJECT_ROOT=/home/boincadm/project` - The project folder.
 	* These should be put in your `.env` file before you build your project. 
+
+If you want to start fresh with a new .env file, you can use this command to delete all your docker containers/images AND volumes `docker compose down -v`
 
 
 #### Under-the-hood
@@ -308,7 +298,7 @@ tmp_*
 
 You may have noticed, for example, `${url_base}` appears in the `config.xml` from above, and this gets substituted by the run-time value of `URL_BASE`. 
 
-Note that these are not permanent, so that if you later run a `docker-compose up` *without* specifying any of the run-time variables, they reset back to their defaults. Their default values can be set in the `.env`. 
+Note that these are not permanent, so that if you later run a `docker compose up` *without* specifying any of the run-time variables, they reset back to their defaults. Their default values can be set in the `.env`. 
 
 The build-time variables cannot be changed at run-time because they affect the build of the Docker images themselves. In practice this is done with Docker `ONBUILD` instructions and build-args. When you source the base `boinc-server-docker` with your `FROM` command, a number of `ONBUILD` instructions are triggered which finish building the images depending on the args that you have specified. 
 
@@ -327,7 +317,7 @@ Your project contains a number of secrets, including:
 These are collected by `boinc-server-docker` and stored in the `secrets` volume. The first time you create your project, default values are given to all of the passwords, and a new set of keys are generated and stored in this volume. The volume is mounted at `/run/secrets` and you can view the secrets via:
 
 ```bash
-docker-compose run makeproject bash
+docker compose run makeproject bash
 cd /run/secrets
 ls # etc...
 ```
@@ -353,11 +343,7 @@ Running the server in Docker essentially adds a layer of security, because an at
 
 
 ---
-*This cookbook is a work in progress; the remainder coming soon!*
-
 
 ### Advanced steps
-
-#### Custom `boinc2docker`-based apps
 
 #### Squashing images

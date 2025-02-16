@@ -38,7 +38,7 @@ To check out this repository and get a test server fully up and running, simply 
 git clone https://github.com/marius311/boinc-server-docker.git
 cd boinc-server-docker
 docker-compose pull
-docker-compose up -d
+export URL_BASE='http://127.0.0.1' && docker-compose up -d # specify the ip address or hostname of your server, if you skip export, it will default to 127.0.0.1
 ```
 
 You can now visit the server webpage and connect clients to the server at http://127.0.0.1/boincserver. 
