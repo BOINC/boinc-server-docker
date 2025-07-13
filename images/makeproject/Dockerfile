@@ -54,6 +54,9 @@ FROM debian:buster-slim AS b2d
 # do boinc2docker as a separate stage so we don't have to keep re-downloading
 # things whenever the build cache is invalidated
 
+# fix debian buster sources.list
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
+
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         ca-certificates \
