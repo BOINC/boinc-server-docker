@@ -8,7 +8,8 @@ FROM debian:buster-slim AS base
 LABEL maintainer="Marius Millea <mariusmillea@gmail.com>"
 
 # fix debian buster sources.list
-RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list
 
 # install packages
 RUN apt-get update \
@@ -55,7 +56,8 @@ FROM debian:buster-slim AS b2d
 # things whenever the build cache is invalidated
 
 # fix debian buster sources.list
-RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

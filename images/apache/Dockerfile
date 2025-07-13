@@ -8,7 +8,8 @@ FROM php:7.3.33-apache-buster AS base
 LABEL maintainer="Marius Millea <mariusmillea@gmail.com>"
 
 # fix debian buster sources.list
-RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list \
+    && sed -i 's/security.debian.org/archive.debian.org/g' /etc/apt/sources.list
 
 # install packages
 RUN apt-get update \
