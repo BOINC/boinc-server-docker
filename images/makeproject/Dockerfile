@@ -7,6 +7,9 @@ FROM debian:buster-slim AS base
 
 LABEL maintainer="Marius Millea <mariusmillea@gmail.com>"
 
+# fix debian buster sources.list
+RUN sed -i 's/deb.debian.org/archive.debian.org/g' /etc/apt/sources.list
+
 # install packages
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
