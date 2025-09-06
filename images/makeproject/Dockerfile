@@ -22,6 +22,7 @@ RUN apt-get update \
         libcurl4-gnutls-dev \
         default-libmysqlclient-dev \
         libssl-dev \
+        libzip-dev \
         m4 \
         make \
         default-mysql-client \
