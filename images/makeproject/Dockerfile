@@ -34,6 +34,7 @@ RUN apt-get update \
         python3 \
         python-mysqldb \
         python3-mysqldb \
+        nlohmann-json3-dev \
     && rm -rf /var/lib/apt/lists
 
 # get source and compile server
