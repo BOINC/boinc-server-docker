@@ -1,6 +1,6 @@
 #!/bin/bash
 
-set -e
+#set -e
 
 cd $PROJECT_ROOT
 
@@ -8,7 +8,8 @@ cd $PROJECT_ROOT
 DOCKER_GID=$(stat -c '%g' /var/run/docker.sock)
 addgroup -gid ${DOCKER_GID} docker
 addgroup ${BOINC_USER} docker
-
+# Apache needs +x to serve this directory
+chmod g+x $HOME
 while :
 do
 
