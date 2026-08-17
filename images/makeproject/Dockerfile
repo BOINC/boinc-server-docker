@@ -22,9 +22,9 @@ RUN apt-get update \
         m4 \
         make \
         default-mysql-client \
-        php8.2-cli \
-        php8.2-mysql \
-        php8.2-xml \
+        php8.4-cli \
+        php8.4-mysql \
+        php8.4-xml \
         pkg-config \
         python3 \
         python3-dev \
